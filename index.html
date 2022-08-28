@@ -1,7 +1,77 @@
-<!DOCTYPE html>
-<html>
-<body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
-</body>
+   <!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Emscripten-Generated Code</title>
+    <style>
+      body 
+      {
+        font-family: arial;
+        margin: 0;
+        padding: none;
+      }
+
+        .emscripten 
+        { 
+            margin:0; 
+            padding:0;
+            background-color: rgba(0, 0, 0, 1.0);
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-width: 0;
+        }
+      
+
+    </style>
+  </head>
+  <body>    
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <script type='text/javascript'>   
+    
+        var Module = {};
+        var canvas = document.getElementById('canvas'); 
+        
+        Module.canvas = canvas;
+        
+        canvas.focus();
+        canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+        
+        function onResize() {
+            canvas.width = window.devicePixelRatio * window.innerWidth;;
+            canvas.height = window.devicePixelRatio * window.innerHeight;
+        }
+        window.addEventListener('resize', onResize);
+        onResize();
+        
+        var api_host = document.location.href;
+        
+        //load wasm of app
+        var xhr_pd = new XMLHttpRequest();
+        xhr_pd.open("GET", api_host + "/gl_test.wasm", true);
+        xhr_pd.responseType = 'arraybuffer';
+        
+        /*xhr_pd.onload = function (e)
+        {
+            if (xhr_pd.readyState === 4)
+            {
+                if(xhr_pd.status === 200)
+                {
+                    
+                }            
+            }
+        };*/
+        xhr_pd.onerror = function (e) { console.error(xhr_pd.statusText); };
+        //xhr_pd.send(null); 
+        
+        //load js of app
+        var script = document.createElement('script');
+        script.src = api_host + "/gl_test.js";
+        script.type = 'text/javascript';
+        script.async = 'true';
+        document.body.appendChild(script);
+
+    </script>
+  </body>
 </html>
