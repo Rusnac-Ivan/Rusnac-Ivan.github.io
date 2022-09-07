@@ -145,11 +145,14 @@ float D_GGX(float NoH, float roughness2)
     return roughness2 / (M_PI * f * f);
 }
 
-vec3 getReflection(float perceptualRoughness, float NoV, vec3 n, vec3 r)
+vec3 getReflection(vec3 baseColor, float roughness, float metallic, float NoV, vec3 n, vec3 r)
 {
-    float lod = perceptualRoughness * 0.5;
-    vec3 light = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
-	return F_Schlick(NoV, light * 0.3, light);
+    float lod = 10.0 * roughness;
+    vec3 reflectance = SRGBtoLINEAR(tonemap(textureLod(uCubeMap, r, lod))).rgb;
+    vec3 f0 = 0.16 * reflectance * (1.0 - metallic) + baseColor * reflectance * metallic;
+    //vec3 f90 = baseColor * reflectance * metallic + (1.0 - metallic) * baseColor;
+    vec3 f90 = baseColor * reflectance * metallic + (1.0 - metallic) * vec3(1.0);
+	return F_Schlick(NoV, f0, f90) * (1.0 - roughness * roughness);
 }
 
 
@@ -160,12 +163,13 @@ void main()
 	vec3 diffuseColor;
 	vec4 baseColor;
 	
+	//baseColor = SRGBtoLINEAR(texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1)) * uBaseColorFactor;
     if (uBaseColorMapSet > -1) 
-        baseColor = SRGBtoLINEAR(texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1)) * uBaseColorFactor;
+        baseColor = texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1) * uBaseColorFactor;
     else 
         baseColor = uBaseColorFactor;
     
-    vec3 f0 = vec3(0.04);
+    vec3 f0 = vec3(0.03);
 	
 	metallic = uMetalnessFactor;
 	perceptualRoughness = uRoughnessFactor;
@@ -175,16 +179,13 @@ void main()
         // Roughness is stored in the 'g' channel, metallic is stored in the 'b' channel.
         // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
         vec4 mrSample = texture(uMetallicRoughnessMap, uMetallicRoughnessMapSet == 0 ? UV0 : UV1);
-        perceptualRoughness = mrSample.g * perceptualRoughness;
-        metallic = mrSample.b * metallic;
+        perceptualRoughness = mrSample.g;
+        metallic = mrSample.b;
 	}
-	else 
-	{
-        perceptualRoughness = clamp(perceptualRoughness, c_MinRoughness, 1.0);
-        metallic = saturate(metallic);
-    }
-    
-    
+	
+    perceptualRoughness = clamp(perceptualRoughness, c_MinRoughness, 1.0);
+    metallic = saturate(metallic);
+
     
     //f0 = 0.16 * f0 * f0 * (1.0 - metallic) + baseColor.rgb * metallic;
     
@@ -208,7 +209,7 @@ void main()
 	vec3 l = normalize(uLightPos - WorldPos);     // Vector from surface point to light
 	vec3 h = normalize(l + v);                        // Half vector between both l and v
 	vec3 r = -normalize(reflect(v, n));
-	r.y *= -1.0;
+	//r.y *= -1.0;
 	
 	float NdotL = clamp(dot(n, l), 0.001, 1.0);
 	float NdotV = clamp(abs(dot(n, v)), 0.001, 1.0);
@@ -235,7 +236,7 @@ void main()
 	
 	// lightIntensity is the illuminance
     // at perpendicular incidence in lux
-    float lightIntensity = 3.f; //lux
+    float lightIntensity = 5.f; //lux
     float illuminance = lightIntensity * NdotL;
     color *= illuminance;
     
@@ -247,9 +248,10 @@ void main()
 		color += emissive;
 	}
 	
-	color += getReflection(perceptualRoughness, NdotV, n, r);
+	color += getReflection(baseColor.rgb, perceptualRoughness, metallic, NdotV, n, r);
 	
-	FragColor = vec4(color + 0.05 * baseColor.rgb, baseColor.a);
+	//FragColor = vec4(color * 0.000001 + vec3(metallic), baseColor.a);+ 0.2 * baseColor.rgb
+	FragColor = vec4(color + 0.2 * baseColor.rgb, baseColor.a);
 }
 
 
