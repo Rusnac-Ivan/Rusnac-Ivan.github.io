@@ -36,6 +36,8 @@ in vec2 UV1;
 uniform vec3 uEyePos;
 uniform vec3 uLightPos;
 
+uniform int uDebugViewInputs;
+
 float uExposure = 4.5;
 float uGamma = 2.2;
 
@@ -252,6 +254,27 @@ void main()
 	
 	//FragColor = vec4(color * 0.000001 + vec3(metallic), baseColor.a);+ 0.2 * baseColor.rgb
 	FragColor = vec4(color + 0.2 * baseColor.rgb, baseColor.a);
+	
+	// Shader inputs debug visualization
+	if (uDebugViewInputs > 0) 
+	{
+		switch (uDebugViewInputs) 
+		{
+			case 1:
+				FragColor.rgba = baseColor; //base color of frag
+				break;
+			case 2:
+				FragColor.rgba = vec4(n.rgb, 1.0); //normal of frag
+				break;
+			case 3:
+				FragColor.rgba = vec4(vec3(perceptualRoughness), 1.0); //roughness of frag
+				break;
+			case 4:
+				FragColor.rgba = vec4(vec3(metallic), 1.0); //metallic of frag
+				break;
+		}
+		//outColor = SRGBtoLINEAR(outColor);
+	}
 }
 
 
