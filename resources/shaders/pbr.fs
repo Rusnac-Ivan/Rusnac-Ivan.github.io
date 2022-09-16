@@ -164,12 +164,20 @@ void main()
 	float metallic;
 	vec3 diffuseColor;
 	vec4 baseColor;
+	vec4 base_Color;
 	
 	//baseColor = SRGBtoLINEAR(texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1)) * uBaseColorFactor;
     if (uBaseColorMapSet > -1) 
-        baseColor = texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1) * uBaseColorFactor;
+    {
+        base_Color = texture(uBaseColorMap, uBaseColorMapSet == 0 ? UV0 : UV1);
+        baseColor = base_Color * uBaseColorFactor;
+    }   
     else 
+    {
         baseColor = uBaseColorFactor;
+        base_Color = uBaseColorFactor;
+    }
+    
     
     vec3 f0 = vec3(0.03);
 	
@@ -261,7 +269,7 @@ void main()
 		switch (uDebugViewInputs) 
 		{
 			case 1:
-				FragColor.rgba = baseColor; //base color of frag
+				FragColor.rgba = base_Color; //base color of frag
 				break;
 			case 2:
 				FragColor.rgba = vec4(n.rgb, 1.0); //normal of frag
